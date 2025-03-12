@@ -34,18 +34,19 @@ int main() {
     }
     char type;
     //0 - none, 1 - prop_static, 2 - prop_dynamic, 3 - prop_physics, 4 - func_detail, 5 - func_brush, 6 - light, 7 - light_spot, 8 - light_dynamic, 9 - func_door/func_door_rotating
-    //10 - info_decal, 11 - info overlay, 12 - trigger_once/remove, 13 - trigger_multiple, 14 - trigger_hurt, 15 - func_areaportal, 16 - func_areaportalwindow, 17 - ambient_generic
+    //10 - info_decal, 11 - info overlay, 12 - trigger_once/remove, 13 - trigger_multiple, 14 - trigger_hurt, 15 - func_areaportal, 16 - func_areaportalwindow, 17 - ambient_generic, 18 - vertices_plus (brushes)
     //string line;//line that is written down to the second file
     unsigned int count_t=0,count_r=0;//count total amount of lines/count how many lines were removed
     while (getline(in, line)) {//yandere dev moment
         if (line.length()>4){
-            if (line.find("classname") == string::npos) {//originally there was find("name") to not corrupt the vmf if some dumbass decides to name their prop "angles 0 0 0", but you can't use quotes without corruption anyway.
+            if (line.find("classname") == string::npos&&line.find("vertices_plus") == string::npos) {//originally there was find("name") to not corrupt the vmf if some dumbass decides to name their prop "angles 0 0 0", but you can't use quotes without corruption anyway.
                 switch (type) {
                     case 0:
                         out << line << endl;
                         break;
                     case 1://prop_static
                         if (line.find("angles\" \"0 0 0") == string::npos &&
+                            line.find("fademaxdist\" \"0") == string::npos &&
                             line.find("fademindist\" \"-1") == string::npos &&
                             line.find("fadescale\" \"1") == string::npos &&
                             line.find("lightmapresolutionx\" \"32") == string::npos &&//i could probably
@@ -56,14 +57,70 @@ int main() {
                         else count_r++;
                         break;
                     case 2://prop_dynamic
-                        out << line << endl;
+                        if (line.find("angles\" \"0 0 0") == string::npos &&
+                            line.find("DisableBoneFollowers\" \"0") == string::npos &&
+                            line.find("shadows\" \"0") == string::npos &&//removes both disableshadows and disablereceiveshadows
+                            line.find("ExplodeDamage\" \"0") == string::npos &&
+                            line.find("ExplodeRadius\" \"0") == string::npos &&
+                            line.find("fademaxdist\" \"0") == string::npos &&
+                            line.find("fademindist\" \"-1") == string::npos &&
+                            line.find("fadescale\" \"1") == string::npos &&
+                            line.find("MaxAnimTime\" \"10") == string::npos &&
+                            line.find("MinAnimTime\" \"5") == string::npos &&
+                            line.find("modelscale\" \"1.0") == string::npos &&
+                            line.find("PerformanceMode\" \"0") == string::npos &&
+                            line.find("pressuredelay\" \"0") == string::npos &&
+                            line.find("RandomAnimation\" \"0") == string::npos &&
+                            line.find("renderamt\" \"255") == string::npos &&
+                            line.find("rendercolor\" \"255 255 255") == string::npos &&
+                            line.find("renderfx\" \"0") == string::npos &&
+                            line.find("rendermode\" \"0") == string::npos &&
+                            line.find("SetBodyGroup\" \"0") == string::npos &&
+                            line.find("skin\" \"0") == string::npos &&
+                            line.find("solid\" \"6") == string::npos&&
+                            line.find("StartDisabled\" \"0") == string::npos)
+                            out << line << endl;
+                        else count_r++;
+                        break;
+                    case 3://prop_physics
+                        if (line.find("angles\" \"0 0 0") == string::npos &&
+                            line.find("damagetoenablemotion\" \"0") == string::npos &&
+                            line.find("Damagetype\" \"0") == string::npos &&
+                            line.find("shadows\" \"0") == string::npos &&
+                            line.find("ExplodeDamage\" \"0") == string::npos &&
+                            line.find("ExplodeRadius\" \"0") == string::npos &&
+                            line.find("fademaxdist\" \"0") == string::npos &&
+                            line.find("fademindist\" \"-1") == string::npos &&
+                            line.find("fadescale\" \"1") == string::npos &&
+                            line.find("forcetoenablemotion\" \"0") == string::npos &&
+                            line.find("inertiaScale\" \"1.0") == string::npos &&
+                            line.find("massScale\" \"0") == string::npos &&
+                            line.find("minhealthdmg\" \"0") == string::npos &&
+                            line.find("modelscale\" \"1.0") == string::npos &&
+                            line.find("nodamageforces\" \"0") == string::npos &&
+                            line.find("PerformanceMode\" \"0") == string::npos &&
+                            line.find("physdamagescale\" \"0.1") == string::npos &&
+                            line.find("pressuredelay\" \"0") == string::npos &&
+                            line.find("renderamt\" \"255") == string::npos &&
+                            line.find("rendercolor\" \"255 255 255") == string::npos &&
+                            line.find("renderfx\" \"0") == string::npos &&
+                            line.find("rendermode\" \"0") == string::npos &&
+                            line.find("shadowcastdist\" \"0") == string::npos&&
+                            line.find("skin\" \"0") == string::npos)
+                            out << line << endl;
+                        else count_r++;
+                        break;
+                    case 4://func_detail
+                        if (line.find("dxlevel\" \"0") == string::npos)
+                            out << line << endl;
+                        else count_r++;
                         break;
                     case 5://func_brush
                         if (line.find("InputFilter\" \"0") == string::npos &&
                             line.find("invert_exclusion\" \"0") == string::npos &&
                             line.find("renderamt\" \"255") == string::npos &&
-                            line.find("rendercolor\" \"255 255 255") == string::npos &&//i could probably
-                            line.find("renderfx\" \"0") == string::npos &&//merge these two
+                            line.find("rendercolor\" \"255 255 255") == string::npos &&
+                            line.find("renderfx\" \"0") == string::npos &&
                             line.find("rendermode\" \"0") == string::npos &&
                             line.find("solidbsp\" \"0") == string::npos &&
                             line.find("Solidity\" \"0") == string::npos &&
@@ -120,7 +177,6 @@ int main() {
                         break;
                     case 9://func_door
                         if (line.find("shadows\" \"0") == string::npos &&
-                            //removed both disableshadows and disablereceiveshadows
                             line.find("dmg\" \"0") == string::npos &&
                             line.find("forceclosed\" \"0") == string::npos &&
                             line.find("health\" \"0") == string::npos &&//i could probably
@@ -144,7 +200,8 @@ int main() {
                         else count_r++;
                         break;
                     case 11://info_overlay
-                        if (line.find("fademindist\" \"-1") == string::npos)
+                        if (line.find("fademaxdist\" \"0") == string::npos&&
+                            line.find("fademindist\" \"-1") == string::npos)
                             out << line << endl;
                         else count_r++;
                         break;
@@ -161,8 +218,8 @@ int main() {
                         break;
                     case 14://trigger_hurt
                         if (line.find("StartDisabled\" \"0") == string::npos &&
-                            line.find("damagemodel\" \"0") &&
-                            line.find("damagetype\" \"0") &&
+                            line.find("damagemodel\" \"0") == string::npos &&
+                            line.find("damagetype\" \"0") == string::npos &&
                             line.find("nodmgforce\" \"0") == string::npos)
                             out << line << endl;
                         else count_r++;
@@ -181,20 +238,24 @@ int main() {
                         break;
                     case 17://ambient_generic
                         if (line.find("cspinup\" \"0") == string::npos &&
-                            line.find("fadeinsecs\" \"0") &&
-                            line.find("fadeoutsecs\" \"0") &&
-                            line.find("health\" \"10") &&
-                            line.find("lfomodpitch\" \"0") &&
-                            line.find("lfomodvol\" \"0") &&
-                            line.find("lforate\" \"0") &&
-                            line.find("lfotype\" \"0") &&
-                            line.find("pitch\" \"100") &&
-                            line.find("pitchstart\" \"100") &&
-                            line.find("preset\" \"0") &&
-                            line.find("radius\" \"1250") &&
-                            line.find("spindown\" \"0") &&
-                            line.find("spinup\" \"0") &&
+                            line.find("secs\" \"0") == string::npos &&//both fadeinsecs and fadeoutsecs
+                            line.find("health\" \"10") == string::npos &&
+                            line.find("lfomodpitch\" \"0") == string::npos &&
+                            line.find("lfomodvol\" \"0") == string::npos &&
+                            line.find("lforate\" \"0") == string::npos &&
+                            line.find("lfotype\" \"0") == string::npos &&
+                            line.find("pitch\" \"100") == string::npos &&
+                            line.find("pitchstart\" \"100") == string::npos &&
+                            line.find("preset\" \"0") == string::npos &&
+                            line.find("radius\" \"1250") == string::npos &&
+                            line.find("spindown\" \"0") == string::npos &&
+                            line.find("spinup\" \"0") == string::npos &&
                             line.find("volstart\" \"0") == string::npos)
+                            out << line << endl;
+                        else count_r++;
+                        break;
+                    case 18://vertices_plus (brushes)
+                        if (line.find("v\" \"") == string::npos)
                             out << line << endl;
                         else count_r++;
                         break;
@@ -203,12 +264,13 @@ int main() {
                         break;
                 }
             }
-            else {//if "classname" is found
+            else if(line.find("classname") != string::npos) {//if "classname" is found
                 if (line.find("\"prop_")!= string::npos){
                     if(line.find("static")!= string::npos) type=1;
                     else if(line.find("dynamic")!= string::npos) type=2;//also affects prop_dynamic_override
                     else type=3;//physics, also affects prop_physics_override, detail and other misc prop objects
                 }
+                else if (line.find("\"func_detail")!= string::npos) type=4;
                 else if (line.find("\"func_brush")!= string::npos) type=5;
                 else if (line.find("\"light")!= string::npos){
                     if(line.find("spot")!= string::npos) type=7;//light_spot
@@ -229,6 +291,9 @@ int main() {
                 }
                 else if (line.find("\"ambient_generic")!= string::npos) type=17;
                 out << line << endl;
+            }
+            else if(line.find("vertices_plus") != string::npos){//if "vertices_plus" is found
+                type=18; out << line << endl;
             }
         }//if the line is <5 letters long
         else out << line << endl;
