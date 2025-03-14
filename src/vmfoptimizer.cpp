@@ -9,11 +9,19 @@ using namespace std;
 //multiple files support
 //options to remove the old file
 //options to remove vertices_plus (hammer++) and editor (entity data)
-//option "is this a prefab?"
+//option "is this a prefab?" (removes more stuff if yes)
+//option to save log (default on)
 int main() {
-    cout<<"VMF optimizer by dabmasterars."<<endl<<R"(Make sure that the path to the file doesn't contain any whitespace characters! Example: "C:\My maps\map.vmf" won't work)"<<endl<<"Drop your .vmf file here or type file name: "<<endl;
-    string line; cin>>line;//reused later as a buffer
+    //cout<<"VMF optimizer by dabmasterars."<<endl<<R"(Make sure that the path to the file doesn't contain any whitespace characters! Example: "C:\My maps\map.vmf" won't work)"<<endl<<"Drop your .vmf file here or type file name: "<<endl;//the bug is fixed
+    cout<<"VMF optimizer by dabmasterars.\nDrop your .vmf file here or type file name: "<<endl;
+    string line;//filename, reused later as a buffer
+    //cin>>line;
+    getline(std::cin, line);//have to do it getline way, otherwise doesn't read whitespace
     ifstream in;
+    if (line.at(0)=='\"'){//erases the quotmarks that windows inserts if
+        line.erase(line.begin());
+        line.erase(line.length() - 1);
+    }
     if (line.find(".vmf")==string::npos) in.open(line.append(".vmf"));
     else in.open(line);
     //ifstream in("file.txt");//test input
@@ -35,8 +43,9 @@ int main() {
     char type;
     //0 - none, 1 - prop_static, 2 - prop_dynamic, 3 - prop_physics, 4 - func_detail, 5 - func_brush, 6 - light, 7 - light_spot, 8 - light_dynamic, 9 - func_door/func_door_rotating
     //10 - info_decal, 11 - info overlay, 12 - trigger_once/remove, 13 - trigger_multiple, 14 - trigger_hurt, 15 - func_areaportal, 16 - func_areaportalwindow, 17 - ambient_generic, 18 - vertices_plus (brushes)
+    //19 - light_environment, 20 - item_ammopack/item_healthkit
     //string line;//line that is written down to the second file
-    unsigned int count_t=0,count_r=0;//count total amount of lines/count how many lines were removed
+    unsigned int count_t=0,count_r=0;//total lines/removed lines
     while (getline(in, line)) {//yandere dev moment
         if (line.length()>4){
             if (line.find("classname") == string::npos&&line.find("vertices_plus") == string::npos) {//originally there was find("name") to not corrupt the vmf if some dumbass decides to name their prop "angles 0 0 0", but you can't use quotes without corruption anyway.
@@ -179,15 +188,15 @@ int main() {
                         if (line.find("shadows\" \"0") == string::npos &&
                             line.find("dmg\" \"0") == string::npos &&
                             line.find("forceclosed\" \"0") == string::npos &&
-                            line.find("health\" \"0") == string::npos &&//i could probably
-                            line.find("ignoredebris\" \"0") == string::npos &&//merge these two
+                            line.find("health\" \"0") == string::npos &&
+                            line.find("ignoredebris\" \"0") == string::npos &&
                             line.find("lip\" \"0") == string::npos &&
                             line.find("locked_sentence\" \"0") == string::npos &&
                             line.find("loopmovesound\" \"0") == string::npos &&
                             line.find("movedir\" \"0 0 0") == string::npos &&
                             line.find("renderamt\" \"255") == string::npos &&
-                            line.find("rendercolor\" \"255 255 255") == string::npos &&//i could probably
-                            line.find("renderfx\" \"0") == string::npos &&//merge these two
+                            line.find("rendercolor\" \"255 255 255") == string::npos &&
+                            line.find("renderfx\" \"0") == string::npos &&
                             line.find("rendermode\" \"0") == string::npos &&
                             line.find("speed\" \"100") == string::npos &&
                             line.find("unlocked_sentence\" \"0") == string::npos)
@@ -259,6 +268,28 @@ int main() {
                             out << line << endl;
                         else count_r++;
                         break;
+                    case 19://light_environment
+                        if (line.find("_ambient\" \"255 255 255 20") == string::npos &&
+                            line.find("_light\" \"255 255 255 200") == string::npos &&
+                            line.find("HDR\" \"-1 -1 -1 1") == string::npos &&//both normal and ambient
+                            line.find("caleHDR\" \"1") == string::npos &&//both
+                            line.find("angles\" \"0 0 0") == string::npos &&
+                            line.find("_inner_cone\" \"30") == string::npos &&
+                            line.find("pitch\" \"0") == string::npos&&
+                            line.find("SunSpreadAngle\" \"0") == string::npos)
+                            out << line << endl;
+                        else count_r++;
+                        break;
+                    case 20://item_
+                        if (line.find("angles\" \"0 0 0") == string::npos &&
+                            line.find("AutoMaterialize\" \"1") == string::npos &&
+                            line.find("fademaxdist\" \"0") == string::npos &&
+                            line.find("fademindist\" \"-1") == string::npos &&
+                            line.find("StartDisabled\" \"0") == string::npos&&
+                            line.find("TeamNum\" \"0") == string::npos)
+                            out << line << endl;
+                        else count_r++;
+                        break;
                     default:
                         out << line << endl;
                         break;
@@ -270,14 +301,22 @@ int main() {
                     else if(line.find("dynamic")!= string::npos) type=2;//also affects prop_dynamic_override
                     else type=3;//physics, also affects prop_physics_override, detail and other misc prop objects
                 }
-                else if (line.find("\"func_detail")!= string::npos) type=4;
-                else if (line.find("\"func_brush")!= string::npos) type=5;
+                else if (line.find("\"func_")!= string::npos){
+                    if (line.find("detail")!= string::npos) type=4;
+                    else if (line.find("brush")!= string::npos) type=5;
+                    else if (line.find("door")!= string::npos) type=9;//both normal and rotating
+                    else if (line.find("areaportal")!= string::npos){
+                        if(line.find("window\"")!= string::npos) type=16;//areaportal_window
+                        else type=15;//areaportal
+                    }
+                    else type=0;
+                }
                 else if (line.find("\"light")!= string::npos){
                     if(line.find("spot")!= string::npos) type=7;//light_spot
                     else if(line.find("dynamic")!= string::npos) type=8;//light_dynamic
+                    else if(line.find("environment")!= string::npos) type=19;//light_environment
                     else type=6;//light
                 }
-                else if (line.find("\"func_door")!= string::npos) type=9;//both normal and rotating
                 else if (line.find("\"info_decal")!= string::npos) type=10;
                 else if (line.find("\"info_overlay")!= string::npos) type=11;
                 else if(line.find("\"trigger")!= string::npos){
@@ -285,11 +324,9 @@ int main() {
                     else if(line.find("hurt")!= string::npos) type=14;
                     else type=12;
                 }
-                else if (line.find("_areaportal")!= string::npos){
-                    if(line.find("window\"")!= string::npos) type=16;//areaportal_window
-                    else type=15;//areaportal
-                }
                 else if (line.find("\"ambient_generic")!= string::npos) type=17;
+                else if (line.find("\"item_")!= string::npos) type=20;
+                else type=0;
                 out << line << endl;
             }
             else if(line.find("vertices_plus") != string::npos){//if "vertices_plus" is found
@@ -301,9 +338,9 @@ int main() {
     }
     in.close();
     out.close();
-    cout <<endl<<endl<< "Execution successful." << endl << "Removed " << count_r << " out of " <<count_t<< " lines. ("<<(float)count_r/(float)count_t*100<<"%)"<<endl<<endl;
+    cout <<endl<<endl<< "Execution successful.\nRemoved " << count_r << " out of " <<count_t<< " lines. ("<<(float)count_r/(float)count_t*100<<"%)\n\n";
     ofstream log("log.txt");//log
-    log<<"Execution successful." << endl << "Removed " << count_r << " out of " <<count_t<< " lines. ("<<(float)count_r/(float)count_t*100<<"%)";
+    log<<"Execution successful.\nRemoved " << count_r << " out of " <<count_t<< " lines. ("<<(float)count_r/(float)count_t*100<<"%)";
     log.close();
     system("pause");
     return 0;
