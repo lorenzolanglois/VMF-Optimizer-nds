@@ -11,6 +11,7 @@ using namespace std;
 //options to remove vertices_plus (hammer++) and editor (entity data)
 //option "is this a prefab?" (removes more stuff if yes)
 //option to save log (default on)
+//option to remove lightmap values (default off cause the default lightmap value can be changed; if on, removes parameter if the value is 16 [default if unconfigured])
 int main() {
     //cout<<"VMF optimizer by dabmasterars."<<endl<<R"(Make sure that the path to the file doesn't contain any whitespace characters! Example: "C:\My maps\map.vmf" won't work)"<<endl<<"Drop your .vmf file here or type file name: "<<endl;//the bug is fixed
     cout<<"VMF optimizer by dabmasterars.\nDrop your .vmf file here or type file name: "<<endl;
@@ -40,12 +41,35 @@ int main() {
         system("pause");
         return 1;
     }
-    char type;
+    size_t pos = line.find_last_of('\\');
+    if (pos != std::string::npos) {
+        line.erase(0, pos+1);
+    }
+    line.erase(line.length() - 9);
+    cout << "\nCompressing " << line << " . . .\n";
+    unsigned char type;
     //0 - none, 1 - prop_static, 2 - prop_dynamic, 3 - prop_physics, 4 - func_detail, 5 - func_brush, 6 - light, 7 - light_spot, 8 - light_dynamic, 9 - func_door/func_door_rotating
-    //10 - info_decal, 11 - info overlay, 12 - trigger_once/remove, 13 - trigger_multiple, 14 - trigger_hurt, 15 - func_areaportal, 16 - func_areaportalwindow, 17 - ambient_generic, 18 - vertices_plus (brushes)
-    //19 - light_environment, 20 - item_ammopack/item_healthkit
+    //10 - info_decal, 11 - info overlay, 12 - trigger_once/remove, 13 - trigger_multiple, 14 - trigger_hurt, 15 - func_areaportal, 16 - func_areaportalwindow, 17 - ambient_generic, 18 - brush entities
+    //19 - light_environment, 20 - item_ammopack/item_healthkit, 21 - move/keyframe_rope, 22 - info_particle_system, 23 - point_spotlight
     //string line;//line that is written down to the second file
     unsigned int count_t=0,count_r=0;//total lines/removed lines
+    while (getline(in, line)&&line!="entity"){//scans the world brushes (which are all before entities), should be faster than the next cycle
+        if(line.find("vertices_plus") != string::npos){//if "vertices_plus" is found
+            for(short int i=0;i<6&&getline(in, line);i++){
+                count_t++; count_r++;
+            }
+            type=18; count_r++;
+        }//lightmaps are not being erased, since the default lightmap value can be changed
+        else if (line.find("rotation\" \"0") == string::npos &&
+            line.find("smoothing_groups\" \"0") == string::npos &&
+            line.find("elevation\" \"0") == string::npos &&
+            line.find("subdiv\" \"0") == string::npos)
+            out << line << endl;
+        else count_r++;
+        count_t++;
+    }
+    out << line << endl; count_t++;
+    //cout<<"\nWorld brushes until line "<<count_t;
     while (getline(in, line)) {//yandere dev moment
         if (line.length()>4){
             if (line.find("classname") == string::npos&&line.find("vertices_plus") == string::npos) {//originally there was find("name") to not corrupt the vmf if some dumbass decides to name their prop "angles 0 0 0", but you can't use quotes without corruption anyway.
@@ -263,8 +287,9 @@ int main() {
                             out << line << endl;
                         else count_r++;
                         break;
-                    case 18://vertices_plus (brushes)
-                        if (line.find("v\" \"") == string::npos)
+                    case 18://brush entities
+                        if (line.find("rotation\" \"0") == string::npos &&
+                            line.find("smoothing_groups\" \"0") == string::npos)
                             out << line << endl;
                         else count_r++;
                         break;
@@ -287,6 +312,45 @@ int main() {
                             line.find("fademindist\" \"-1") == string::npos &&
                             line.find("StartDisabled\" \"0") == string::npos&&
                             line.find("TeamNum\" \"0") == string::npos)
+                            out << line << endl;
+                        else count_r++;
+                        break;
+                    case 21://ropes
+                        if (line.find("Barbed\" \"0") == string::npos &&
+                            line.find("Breakable\" \"0") == string::npos &&
+                            line.find("Collide\" \"0") == string::npos &&
+                            line.find("Dangling\" \"-1") == string::npos &&
+                            line.find("dxlevel\" \"0") == string::npos&&
+                            line.find("NoWind\" \"0") == string::npos &&
+                            line.find(R"(RopeMaterial" "cable/cable.vmt")") == string::npos &&
+                            line.find("Slack\" \"25") == string::npos&&
+                            line.find("Subdiv\" \"2") == string::npos&&
+                            line.find("TextureScale\" \"1") == string::npos&&
+                            line.find("Type\" \"0") == string::npos&&
+                            line.find("Width\" \"2") == string::npos)
+                            out << line << endl;
+                        else count_r++;
+                        break;
+                    case 22://info_particle_system
+                        if (line.find("angles\" \"0 0 0") == string::npos &&
+                            line.find("parent\" \"0") == string::npos &&
+                            line.find("flag_as_weather\" \"0") == string::npos &&
+                            line.find("start_active\" \"0") == string::npos)
+                            out << line << endl;
+                        else count_r++;
+                        break;
+                    case 23://point_spotlight
+                        if (line.find("angles\" \"0 0 0") == string::npos &&
+                            line.find("disablereceiveshadows\" \"0") == string::npos &&
+                            line.find("HDRColorScale\" \"1.0") == string::npos &&
+                            line.find("IgnoreSolid\" \"0") == string::npos &&
+                            line.find("dxlevel\" \"0") == string::npos&&
+                            line.find("renderamt\" \"255") == string::npos &&
+                            line.find("rendercolor\" \"255 255 255") == string::npos &&
+                            line.find("renderfx\" \"0") == string::npos &&
+                            line.find("rendermode\" \"0") == string::npos &&
+                            line.find("spotlightlength\" \"500") == string::npos &&
+                            line.find("spotlightwidth\" \"50") == string::npos)
                             out << line << endl;
                         else count_r++;
                         break;
@@ -317,8 +381,12 @@ int main() {
                     else if(line.find("environment")!= string::npos) type=19;//light_environment
                     else type=6;//light
                 }
-                else if (line.find("\"info_decal")!= string::npos) type=10;
-                else if (line.find("\"info_overlay")!= string::npos) type=11;
+                else if (line.find("\"info_")!= string::npos){
+                    if (line.find("decal")!= string::npos) type=10;
+                    else if (line.find("overlay")!= string::npos) type=11;
+                    else if (line.find("particle")!= string::npos) type=22;
+                    else type=0;
+                }
                 else if(line.find("\"trigger")!= string::npos){
                     if(line.find("multiple")!= string::npos) type=13;//multiple goes first because it's the most frequent
                     else if(line.find("hurt")!= string::npos) type=14;
@@ -326,11 +394,16 @@ int main() {
                 }
                 else if (line.find("\"ambient_generic")!= string::npos) type=17;
                 else if (line.find("\"item_")!= string::npos) type=20;
+                else if (line.find("rope\"")!= string::npos) type=21;
+                else if (line.find("\"point_spotlight")!= string::npos) type=23;
                 else type=0;
                 out << line << endl;
             }
             else if(line.find("vertices_plus") != string::npos){//if "vertices_plus" is found
-                type=18; out << line << endl;
+                for(short int i=0;i<6&&getline(in, line);i++){
+                    count_t++; count_r++;
+                }
+                type=18; count_r++;
             }
         }//if the line is <5 letters long
         else out << line << endl;
