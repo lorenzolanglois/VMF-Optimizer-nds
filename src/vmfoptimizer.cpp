@@ -55,10 +55,10 @@ int main() {
     unsigned int count_t=0,count_r=0;//total lines/removed lines
     while (getline(in, line)&&line!="entity"){//scans the world brushes (which are all before entities), should be faster than the next cycle
         if(line.find("vertices_plus") != string::npos){//if "vertices_plus" is found
-            for(short int i=0;i<6&&getline(in, line);i++){
+            while(line.find("material") == string::npos&&getline(in, line)){
                 count_t++; count_r++;
             }
-            type=18; count_r++;
+            out << line << endl;
         }//lightmaps are not being erased, since the default lightmap value can be changed
         else if (line.find("rotation\" \"0") == string::npos &&
             line.find("smoothing_groups\" \"0") == string::npos &&
@@ -400,10 +400,10 @@ int main() {
                 out << line << endl;
             }
             else if(line.find("vertices_plus") != string::npos){//if "vertices_plus" is found
-                for(short int i=0;i<6&&getline(in, line);i++){
+                while(line.find("material") == string::npos&&getline(in, line)){
                     count_t++; count_r++;
                 }
-                type=18; count_r++;
+                type=18; out << line << endl;
             }
         }//if the line is <5 letters long
         else out << line << endl;
