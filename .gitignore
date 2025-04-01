@@ -1,0 +1,6 @@
+vmfoptimizer
+vmfoptimizer.exe
+build/
+.vscode/
+*.vmf
+log.txt

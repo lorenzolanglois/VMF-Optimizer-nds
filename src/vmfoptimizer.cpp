@@ -12,26 +12,41 @@ using namespace std;
 //option "is this a prefab?" (removes more stuff if yes)
 //option to save log (default on)
 //option to remove lightmap values (default off cause the default lightmap value can be changed; if on, removes parameter if the value is 16 [default if unconfigured])
+
+string removeExtraCharacters(string line) {
+    string search[] = {"\r", "\n", "\t", "\" \""};
+    string replace[] = {"", "", "", "\"\""};
+
+    for (size_t i = 0, pos = 0; i < size(search); i += 1, pos = 0) {
+        while ((pos = line.find(search[i], pos)) != string::npos) {
+            line.replace(pos, search[i].length(), replace[i]);
+            pos += replace[i].length();
+        }
+    }
+    return line;
+}
+
 int main() {
     //cout<<"VMF optimizer by dabmasterars."<<endl<<R"(Make sure that the path to the file doesn't contain any whitespace characters! Example: "C:\My maps\map.vmf" won't work)"<<endl<<"Drop your .vmf file here or type file name: "<<endl;//the bug is fixed
     cout<<"VMF optimizer by dabmasterars.\nMultiple files have to be inserted consecutively.\nDrop your .vmf file here or type file name: "<<endl;
     string filename;//filename, reused later as a buffer
     //cin>>line;
-    getline(std::cin, filename);//have to do it getline way, otherwise doesn't read whitespace
+    ifstream file(filename, ios::binary);
+    getline(cin, filename);//have to do it getline way, otherwise doesn't read whitespace
     if (filename.length()==0) exit(0);
     ifstream in;
     unsigned long long int count_t_all=0, count_r_all=0;//total lines/removed lines in all files
     unsigned short int filecount=0;
     ofstream log("log.txt");//log
-    while(filename.length()!=0) {//cycle until you press enter without typing anything (otherwise it will start working with a new file)
+    while (filename.length()!=0) {//cycle until you press enter without typing anything (otherwise it will start working with a new file)
         if (filename.at(0) == '\"') {//erases the quotmarks that windows inserts if
             filename.erase(filename.begin());
             filename.erase(filename.length() - 1);
         }
-        if (filename.find(".vmf") == string::npos) in.open(filename.append(".vmf"));
-        else in.open(filename);
+        if (filename.find(".vmf") == string::npos) file.open(filename.append(".vmf"), ios::binary);
+        else file.open(filename, ios::binary);
         //ifstream in("file.txt");//test input
-        if (!in.is_open()) {
+        if (!file.is_open()) {
             cerr << "Error. File \"" << filename << "\" doesn't exist." << endl;
             log << "Error. File \"" << filename << "\" doesn't exist.";
             log.close();
@@ -46,7 +61,7 @@ int main() {
             return 1;
         }
         size_t pos = filename.find_last_of('\\');
-        if (pos != std::string::npos) {
+        if (pos != string::npos) {
             filename.erase(0, pos + 1);
         }
         filename.erase(filename.length() - 9);
@@ -57,33 +72,33 @@ int main() {
         //19 - light_environment, 20 - item_ammopack/item_healthkit, 21 - move/keyframe_rope, 22 - info_particle_system, 23 - point_spotlight
         string line;
         unsigned int count_t = 0, count_r = 0;//total lines/removed lines
-        while (getline(in, line) && line !=
+        while (getline(file, line) && line !=
                                     "entity") {//scans the world brushes (which are all before entities), should be faster than the next cycle
             if (line.find("vertices_plus") != string::npos) {//if "vertices_plus" is found
-                while (line.find("material") == string::npos && getline(in, line)) {
+                while (line.find("material") == string::npos && getline(file, line)) {
                     count_t++;
                     count_r++;
                 }
-                out << line << endl;
+                out << removeExtraCharacters(line);
             }//lightmaps are not being erased, since the default lightmap value can be changed
             else if (line.find("rotation\" \"0") == string::npos &&
                      line.find("smoothing_groups\" \"0") == string::npos &&
                      line.find("elevation\" \"0") == string::npos &&
                      line.find("subdiv\" \"0") == string::npos)
-                out << line << endl;
+                out << removeExtraCharacters(line);
             else count_r++;
             count_t++;
         }
-        out << line << endl;
+        out << removeExtraCharacters(line);
         count_t++;
         //cout<<"\nWorld brushes until line "<<count_t;
-        while (getline(in, line)) {//yandere dev moment
+        while (getline(file, line)) {//yandere dev moment
             if (line.length() > 4) {
                 if (line.find("classname") == string::npos &&
                     line.find("vertices_plus") == string::npos) {//originally there was find("name") to not corrupt the vmf if some dumbass decides to name their prop "angles 0 0 0", but you can't use quotes without corruption anyway.
                     switch (type) {
                         case 0:
-                            out << line << endl;
+                            out << removeExtraCharacters(line);
                             break;
                         case 1://prop_static
                             if (line.find("angles\" \"0 0 0") == string::npos &&
@@ -94,7 +109,7 @@ int main() {
                                 line.find("lightmapresolutiony\" \"32") == string::npos &&//merge these two
                                 line.find("skin\" \"0") == string::npos &&
                                 line.find("solid\" \"6") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 2://prop_dynamic
@@ -121,7 +136,7 @@ int main() {
                                 line.find("skin\" \"0") == string::npos &&
                                 line.find("solid\" \"6") == string::npos &&
                                 line.find("StartDisabled\" \"0") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 3://prop_physics
@@ -149,12 +164,12 @@ int main() {
                                 line.find("rendermode\" \"0") == string::npos &&
                                 line.find("shadowcastdist\" \"0") == string::npos &&
                                 line.find("skin\" \"0") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 4://func_detail
                             if (line.find("dxlevel\" \"0") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 5://func_brush
@@ -167,7 +182,7 @@ int main() {
                                 line.find("solidbsp\" \"0") == string::npos &&
                                 line.find("Solidity\" \"0") == string::npos &&
                                 line.find("StartDisabled") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 6://light: since light and light_spot have some identical parameter names, i wanted to merge them for efficiency (case 7: case 6: break;), but my code shat itself, so yeah
@@ -182,7 +197,7 @@ int main() {
                                 line.find("_quadratic_attn\" \"1") == string::npos &&
                                 line.find("_zero_percent_distance\" \"0") == string::npos &&
                                 line.find("style\" \"0") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 7://light_spot
@@ -202,7 +217,7 @@ int main() {
                                 line.find("_exponent\" \"1") == string::npos &&
                                 line.find("_inner_cone\" \"30") == string::npos &&
                                 line.find("pitch\" \"-90") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 8://light_dynamic
@@ -214,7 +229,7 @@ int main() {
                                 line.find("distance\" \"120") == string::npos &&
                                 line.find("spotlight_radius\" \"80") == string::npos &&
                                 line.find("pitch\" \"-90") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 9://func_door
@@ -233,29 +248,29 @@ int main() {
                                 line.find("rendermode\" \"0") == string::npos &&
                                 line.find("speed\" \"100") == string::npos &&
                                 line.find("unlocked_sentence\" \"0") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 10://info_decal
                             if (line.find("angles\" \"0 0 0") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 11://info_overlay
                             if (line.find("fademaxdist\" \"0") == string::npos &&
                                 line.find("fademindist\" \"-1") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 12://trigger_once, trigger_remove, other triggers
                             if (line.find("StartDisabled\" \"0") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 13://trigger_multiple
                             if (line.find("StartDisabled\" \"0") == string::npos &&
                                 line.find("wait\" \"1") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 14://trigger_hurt
@@ -263,19 +278,19 @@ int main() {
                                 line.find("damagemodel\" \"0") == string::npos &&
                                 line.find("damagetype\" \"0") == string::npos &&
                                 line.find("nodmgforce\" \"0") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 15://func_areaportal
                             if (line.find("PortalVersion\" \"1") == string::npos &&
                                 line.find("StartOpen\" \"1") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 16://func_areaportal_window
                             if (line.find("PortalVersion\" \"1") == string::npos &&
                                 line.find("TranslucencyLimit\" \"0.2") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 17://ambient_generic
@@ -293,13 +308,13 @@ int main() {
                                 line.find("spindown\" \"0") == string::npos &&
                                 line.find("spinup\" \"0") == string::npos &&
                                 line.find("volstart\" \"0") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 18://brush entities
                             if (line.find("rotation\" \"0") == string::npos &&
                                 line.find("smoothing_groups\" \"0") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 19://light_environment
@@ -311,7 +326,7 @@ int main() {
                                 line.find("_inner_cone\" \"30") == string::npos &&
                                 line.find("pitch\" \"0") == string::npos &&
                                 line.find("SunSpreadAngle\" \"0") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 20://item_
@@ -321,7 +336,7 @@ int main() {
                                 line.find("fademindist\" \"-1") == string::npos &&
                                 line.find("StartDisabled\" \"0") == string::npos &&
                                 line.find("TeamNum\" \"0") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 21://ropes
@@ -337,7 +352,7 @@ int main() {
                                 line.find("TextureScale\" \"1") == string::npos &&
                                 line.find("Type\" \"0") == string::npos &&
                                 line.find("Width\" \"2") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 22://info_particle_system
@@ -345,7 +360,7 @@ int main() {
                                 line.find("parent\" \"0") == string::npos &&
                                 line.find("flag_as_weather\" \"0") == string::npos &&
                                 line.find("start_active\" \"0") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 23://point_spotlight
@@ -360,18 +375,18 @@ int main() {
                                 line.find("rendermode\" \"0") == string::npos &&
                                 line.find("spotlightlength\" \"500") == string::npos &&
                                 line.find("spotlightwidth\" \"50") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         case 24://editor_text
                             if (line.find("angles\" \"-0 0 0") == string::npos &&
                                 line.find("color\" \"255 255 255") == string::npos &&
                                 line.find("textsize\" \"10") == string::npos)
-                                out << line << endl;
+                                out << removeExtraCharacters(line);
                             else count_r++;
                             break;
                         default:
-                            out << line << endl;
+                            out << removeExtraCharacters(line);
                             break;
                     }
                 } else if (line.find("classname") != string::npos) {//if "classname" is found
@@ -408,27 +423,27 @@ int main() {
                     else if (line.find("\"point_spotlight") != string::npos) type = 23;
                     else if (line.find("\"editor") != string::npos) type = 24;
                     else type = 0;
-                    out << line << endl;
+                    out << removeExtraCharacters(line);
                 } else if (line.find("vertices_plus") != string::npos) {//if "vertices_plus" is found
-                    while (line.find("material") == string::npos && getline(in, line)) {
+                    while (line.find("material") == string::npos && getline(file, line)) {
                         count_t++;
                         count_r++;
                     }
                     type = 18;
-                    out << line << endl;
+                    out << removeExtraCharacters(line);
                 }
             }//if the line is <5 letters long
-            else out << line << endl;
+            else out << removeExtraCharacters(line);
             count_t++;
         }
-        in.close();
+        file.close();
         out.close();
         cout << endl << endl << "Finished file "<<filename<<".\nRemoved " << count_r << " out of " << count_t << " lines. ("
              << (float) count_r / (float) count_t * 100 << "%)\n\nPress ENTER to finish program. If you wish to continue, drop another file here or type file name:\n";
         log << "Finished file "<<filename<<".\nRemoved " << count_r << " out of " << count_t << " lines. ("
             << (float) count_r / (float) count_t * 100 << "%)\n\n";
         filecount++; count_r_all=count_r_all+count_r; count_t_all=count_t_all+count_t;
-        getline(std::cin, filename);
+        getline(cin, filename);
     }
     cout<<"\nSuccessful compression of "<<filecount<<" files.\nRemoved " << count_r_all << " out of " << count_t_all << " total lines. ("<< (float) count_r_all / (float) count_t_all * 100 << "%)\n\n";
     log<<"\nSuccessful compression of "<<filecount<<" files.\nRemoved " << count_r_all << " out of " << count_t_all << " total lines. ("<< (float) count_r_all / (float) count_t_all * 100 << "%)";
