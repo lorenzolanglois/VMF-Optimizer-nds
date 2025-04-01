@@ -1,5 +1,5 @@
 # VMF Optimizer
-Program to compress Valve Map Files (VMF) for archival purposes. Compatible with any Source Engine game.
+Program to compress Valve Map Files (VMF) to make it optimized enough for nds roms. Supposedly compatible with any Source Engine game.
 
 # How it works
 The program will remove parameters that have default values. When the modified file is opened, Hammer will fill the missing parameters with default values; nothing changes, hence lossless optimization.
@@ -12,4 +12,4 @@ Since saving the file will re-add the default values again, the tool is best use
 3. After several seconds, the optimized vmf will be created in the same directory as the original file.
 
 # Credits
-All code by dabmasterars
+Fork from the project made by dabmasterars
