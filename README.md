@@ -1,15 +1,22 @@
 # VMF Optimizer
-Program to compress Valve Map Files (VMF) to make it optimized enough for nds roms. Supposedly compatible with any Source Engine game.
+Program to compress Valve Map Files (VMF) to make them optimized enough for nds roms. Supposedly compatible with any Source Engine game.
 
-# How it works
-The program will remove parameters that have default values. When the modified file is opened, Hammer will fill the missing parameters with default values; nothing changes, hence lossless optimization.
+Primilary useful for my other project [Stanley-DS](https://github.com/lorenzolanglois/Stanley-DS).
 
-Since saving the file will re-add the default values again, the tool is best used for archival purposes. (if you're like me and have a lot of vmfs of your previous map versions, this tool will be useful)
+## How it works
+The program will remove parameters that have default values, as well as useless characters like spaces, tabulations and new line characters.
 
-# Instruction
-1. Launch vmfoptimizer.exe.
-2. Drop your .vmf file into the command window or type its directory manually.
-3. After several seconds, the optimized vmf will be created in the same directory as the original file.
+This process is useful and almost necessary for .vmf map files used on the Nintendo DS, since the memory is (very) limited.
 
-# Credits
-Fork from the project made by dabmasterars
+## Instruction
+1. Launch *vmfoptimizer.exe* (on Windows) or *vmfoptimizer* (on Linux)
+2. Drop your .vmf file into the command window or type its name manually
+3. After several seconds, the optimized vmf will be created in the same directory as the original file
+
+## Arguments
+>-normal
+
+Use this argument to not remove properties useless on DS. This will make the map file compatible with Hammer.
+
+## Credits
+Fork from the project [VMF-Optimizer](https://github.com/dabmasterars/VMF-Optimizer) made by [dabmasterars](https://github.com/dabmasterars)
