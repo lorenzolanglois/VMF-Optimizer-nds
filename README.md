@@ -16,7 +16,12 @@ This process is useful and almost necessary for .vmf map files used on the Ninte
 ## Arguments
 >-normal
 
-Use this argument to not remove properties useless on DS. This will make the map file compatible with Hammer.
+Keep properties normally removed for DS. This will ensure that the map file is compatible with Hammer. (Similar to how original VMF Optimizer works)
+<br>
+
+>-low
+
+Keep useless characters including spaces, tabulations and new lines. Mostly useful for debugging and to make the VMF file more readable to humans.
 
 ## Credits
 Fork from the project [VMF-Optimizer](https://github.com/dabmasterars/VMF-Optimizer) made by [dabmasterars](https://github.com/dabmasterars)
