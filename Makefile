@@ -8,7 +8,7 @@ $(TARGET): build $(OBJ)
 	$(CXX) $(OBJ) -o $@
 
 build/%.o: src/%.cpp | build
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@ -Iincludes
 
 build:
 	mkdir -p build
