@@ -1,6 +1,10 @@
 #pragma once
 
 #include <string>
+#include <fstream>
+#include <list>
+
+using namespace std;
 
 class Stats {
     public:
@@ -18,22 +22,29 @@ class Stats {
 
 class Data {
     public:
-        Data() {
-            log.open("log.txt");
-        }
+        // List of string containing the potential files added in parameter
+        list<std::string> fileList;
         // String containing the last input entered by the user
-        std::string userInput = "";
+        string userInput = "";
         // String containing the current line
-        std::string line = "";
+        string line = "";
         // The file that is being read
-        std::ifstream file;
+        ifstream file;
         // The log file
-        std::ofstream log;
+        ofstream log;
         // The file that is being written
-        std::ofstream out;
+        ofstream out;
         // If boolean is true, apply nds optimization
         bool isNds = true;
         // If boolean is false, remove useless characters
         bool isLow = false;
+        // If boolean is true, write logs in a file
+        bool isLog = true;
+        // If boolean is false, do not use filelist given in argument
+        bool isFileList = false;
 };
 
+// nds
+
+void optimizeWorldNds(Stats *stats, Data *data);
+void optimizeEntitiesNds(Stats *stats, Data *data);

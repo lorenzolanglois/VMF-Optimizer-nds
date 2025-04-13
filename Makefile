@@ -1,6 +1,6 @@
 CXX = g++
 TARGET = vmfoptimizer
-SRC = src/vmfoptimizer.cpp
+SRC = $(wildcard src/*.cpp)
 OBJ = $(SRC:src/%.cpp=build/%.o)
 CXXFLAGS = -Wall -Wextra -O2
 

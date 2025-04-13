@@ -1,8 +1,6 @@
 // TO DO:
-// options to remove the old file
 // options to remove vertices_plus (hammer++) and editor (entity data)
 // option "is this a prefab?" (removes more stuff if yes)
-// option to save log (default on)
 // option to remove lightmap values (default off cause the default lightmap value can be changed; if on, removes parameter if the value is 16 [default if unconfigured])
 
 #include <iostream>
@@ -41,8 +39,10 @@ void loadFile(string &userInput, Data *data) {
     }
     if (!data->file.is_open()) {
         cerr << "Error. File \"" << userInput << "\" doesn't exist." << endl;
-        data->log << "Error. File \"" << userInput << "\" doesn't exist.";
-        data->log.close();
+        if (data->isLog) {
+            data->log << "Error. File \"" << userInput << "\" doesn't exist.";
+            data->log.close();
+        }
         exit(1);
     }
     data->out.open(userInput.erase(userInput.length() - 4).append("_opti.vmf"));
@@ -55,21 +55,6 @@ void loadFile(string &userInput, Data *data) {
         userInput.erase(0, pos + 1);
     }
     userInput.erase(userInput.length() - 9);
-}
-
-void optimizeWorldNds(Stats *stats, Data *data) {
-    if (data->line.find("musicpostfix\" \"") != string::npos ||
-        data->line.find("maxpropscreenwidth\" \"") != string::npos ||
-        data->line.find("maxblobcount\" \"") != string::npos ||
-        data->line.find("detailvbsp\" \"") != string::npos ||
-        data->line.find("detailmaterial\" \"") != string::npos ||
-        data->line.find("comment\" \"") != string::npos ||
-        data->line.find("mapversion\" \"") != string::npos ||
-        data->line.find("classname\" \"") != string::npos ||
-        data->line.find("lightmapscale\" \"") != string::npos) {
-            data->line = "";
-            stats->currentRemovedLines++;
-    }
 }
 
 void optimizeWorld(Stats *stats, Data *data) {
@@ -104,6 +89,9 @@ void optimizeEntities(Stats *stats, Data *data) {
     unsigned char type = 0;
 
     while (getline(data->file, data->line)) {
+        if (data->isNds) {
+            optimizeEntitiesNds(stats, data);
+        }
         if (data->line.length() > 4) {
             if (data->line.find("classname") == string::npos &&
                 data->line.find("vertices_plus") == string::npos) {
@@ -451,11 +439,19 @@ void optimizeEntities(Stats *stats, Data *data) {
 
 void argsParser(int argc, char *argv[], Data *data) {
     for (int i = 1; i < argc; ++i) {
-        if (std::string(argv[i]) == "-normal") {
+        if (string(argv[i]) == "-nonds") {
             data->isNds = false;
-        }
-        if (std::string(argv[i]) == "-low") {
+        } else if (string(argv[i]) == "-keep") {
             data->isLow = true;
+        } else if (string(argv[i]) == "-nolog") {
+            data->isLog = false;
+        } else if (string(argv[i]) == "-nolog") {
+            data->isLog = false;
+        } else if (string(argv[i]).at(0) == '-') {
+            cerr << "Unknown argument: " + string(argv[i]) << endl;
+        } else {
+            data->isFileList = true;
+            data->fileList.push_back(string(argv[i]));
         }
     }
 }
@@ -466,14 +462,25 @@ void optimizer(int argc, char *argv[]) {
 
     cout << "VMF Optimizer nds, originally by dabmasterars, fork by lorenzolanglois.\nMultiple files have to be inserted consecutively.\nDrop your .vmf file here or type file name: " << endl;
     argsParser(argc, argv, &data);
+    if (data.isLog) {
+        data.log.open("log.txt");
+    }
     while (1) {
-        getline(cin, data.userInput);
-        if (data.userInput.length() == 0 && data.line == "") {
-            break;
-        } else if (data.userInput.length() == 0) {
-            exit(0);
+        if (data.isFileList) {
+            if (data.fileList.empty()) {
+                break;
+            }
+            loadFile(data.fileList.front(), &data);
+            data.fileList.pop_front();
+        } else {
+            getline(cin, data.userInput);
+            if (data.userInput.length() == 0 && data.line == "") {
+                break;
+            } else if (data.userInput.length() == 0) {
+                exit(0);
+            }
+            loadFile(data.userInput, &data);
         }
-        loadFile(data.userInput, &data);
         data.line = "";
 
         cout << "\nOptimizing " << data.userInput << " . . .\n";
@@ -484,15 +491,19 @@ void optimizer(int argc, char *argv[]) {
         data.out.close();
         cout << endl << endl << "Finished file " << data.userInput << ".\nRemoved " << stats.currentRemovedLines << " out of " << stats.currentLines << " lines. ("
              << (float) stats.currentRemovedLines / (float) stats.currentLines * 100 << "%)\n\nPress ENTER to finish program. If you wish to continue, drop another file here or type file name:\n";
-        data.log << "Finished file " << data.userInput <<".\nRemoved " << stats.currentRemovedLines << " out of " << stats.currentLines << " lines. ("
-            << (float) stats.currentRemovedLines / (float) stats.currentLines * 100 << "%)\n\n";
+        if (data.isLog) {
+            data.log << "Finished file " << data.userInput <<".\nRemoved " << stats.currentRemovedLines << " out of " << stats.currentLines << " lines. ("
+                << (float) stats.currentRemovedLines / (float) stats.currentLines * 100 << "%)\n\n";
+        }
         stats.totalFiles++;
         stats.totalRemovedLines = stats.totalRemovedLines + stats.currentRemovedLines;
         stats.totalLines = stats.totalLines + stats.currentLines;
     }
     cout << "\nSuccessful compression of " << stats.totalFiles << " files.\nRemoved " << stats.totalRemovedLines << " out of " << stats.totalLines << " stats.total lines. (" << (float) stats.totalRemovedLines / (float) stats.totalLines * 100 << "%)\n\n";
-    data.log << "\nSuccessful compression of " << stats.totalFiles << " files.\nRemoved " << stats.totalRemovedLines << " out of " << stats.totalLines << " stats.total lines. (" << (float) stats.totalRemovedLines / (float) stats.totalLines * 100 << "%)";
-    data.log.close();
+    if (data.isLog) {
+        data.log << "\nSuccessful compression of " << stats.totalFiles << " files.\nRemoved " << stats.totalRemovedLines << " out of " << stats.totalLines << " stats.total lines. (" << (float) stats.totalRemovedLines / (float) stats.totalLines * 100 << "%)";
+        data.log.close();
+    }
 }
 
 int main(int argc, char *argv[]) {
