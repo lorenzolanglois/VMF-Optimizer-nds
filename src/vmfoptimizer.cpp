@@ -27,34 +27,34 @@ string removeExtraCharacters(Data *data) {
     return data->line;
 }
 
-void loadFile(string &userInput, Data *data) {
-    if (userInput.at(0) == '\"') {
-        userInput.erase(userInput.begin());
-        userInput.erase(userInput.length() - 1);
+void loadFile(Data *data) {
+    if (data->userInput.at(0) == '\"') {
+        data->userInput.erase(data->userInput.begin());
+        data->userInput.erase(data->userInput.length() - 1);
     }
-    if (userInput.find(".vmf") == string::npos) {
-        data->file.open(userInput.append(".vmf"), ios::binary);
+    if (data->userInput.find(".vmf") == string::npos) {
+        data->file.open(data->userInput.append(".vmf"), ios::binary);
     } else {
-        data->file.open(userInput, ios::binary);
+        data->file.open(data->userInput, ios::binary);
     }
     if (!data->file.is_open()) {
-        cerr << "Error. File \"" << userInput << "\" doesn't exist." << endl;
+        cerr << "Error. File \"" << data->userInput << "\" doesn't exist." << endl;
         if (data->isLog) {
-            data->log << "Error. File \"" << userInput << "\" doesn't exist.";
+            data->log << "Error. File \"" << data->userInput << "\" doesn't exist.";
             data->log.close();
         }
         exit(1);
     }
-    data->out.open(userInput.erase(userInput.length() - 4).append("_opti.vmf"));
+    data->out.open(data->userInput.erase(data->userInput.length() - 4).append("_opti.vmf"));
     if (!data->out.is_open()) {
         cerr << "Output error." << endl;
         exit(1);
     }
-    size_t pos = userInput.find_last_of('\\');
+    size_t pos = data->userInput.find_last_of('\\');
     if (pos != string::npos) {
-        userInput.erase(0, pos + 1);
+        data->userInput.erase(0, pos + 1);
     }
-    userInput.erase(userInput.length() - 9);
+    data->userInput.erase(data->userInput.length() - 9);
 }
 
 void optimizeWorld(Stats *stats, Data *data) {
@@ -456,7 +456,37 @@ void argsParser(int argc, char *argv[], Data *data) {
     }
 }
 
-void optimizer(int argc, char *argv[]) {
+bool isAlreadyOptimized(Data *data) {
+    if (getline(data->file, data->line) && data->line == "optimized{}") {
+        return true;
+    } else {
+        data->file.clear();
+        data->file.seekg(0, ios::beg);
+        return false;
+    }
+}
+
+void optimizer(Stats *stats, Data *data) {
+    cout << "\nOptimizing " << data->userInput << " . . .\n";
+    data->out << "optimized{}\n";
+
+    optimizeWorld(stats, data);
+    optimizeEntities(stats, data);
+
+    data->file.close();
+    data->out.close();
+    cout << endl << endl << "Finished file " << data->userInput << ".\nRemoved " << stats->currentRemovedLines << " out of " << stats->currentLines << " lines. ("
+            << (float) stats->currentRemovedLines / (float) stats->currentLines * 100 << "%)\n\nPress ENTER to finish program. If you wish to continue, drop another file here or type file name:\n";
+    if (data->isLog) {
+        data->log << "Finished file " << data->userInput <<".\nRemoved " << stats->currentRemovedLines << " out of " << stats->currentLines << " lines. ("
+            << (float) stats->currentRemovedLines / (float) stats->currentLines * 100 << "%)\n\n";
+    }
+    stats->totalFiles++;
+    stats->totalRemovedLines = stats->totalRemovedLines + stats->currentRemovedLines;
+    stats->totalLines = stats->totalLines + stats->currentLines;
+}
+
+void fileLauncher(int argc, char *argv[]) {
     Stats stats;
     Data data;
 
@@ -470,7 +500,8 @@ void optimizer(int argc, char *argv[]) {
             if (data.fileList.empty()) {
                 break;
             }
-            loadFile(data.fileList.front(), &data);
+            data.userInput = data.fileList.front();
+            loadFile(&data);
             data.fileList.pop_front();
         } else {
             getline(cin, data.userInput);
@@ -479,25 +510,18 @@ void optimizer(int argc, char *argv[]) {
             } else if (data.userInput.length() == 0) {
                 exit(0);
             }
-            loadFile(data.userInput, &data);
+            loadFile(&data);
         }
         data.line = "";
 
-        cout << "\nOptimizing " << data.userInput << " . . .\n";
-        optimizeWorld(&stats, &data);
-        optimizeEntities(&stats, &data);
-
-        data.file.close();
-        data.out.close();
-        cout << endl << endl << "Finished file " << data.userInput << ".\nRemoved " << stats.currentRemovedLines << " out of " << stats.currentLines << " lines. ("
-             << (float) stats.currentRemovedLines / (float) stats.currentLines * 100 << "%)\n\nPress ENTER to finish program. If you wish to continue, drop another file here or type file name:\n";
-        if (data.isLog) {
-            data.log << "Finished file " << data.userInput <<".\nRemoved " << stats.currentRemovedLines << " out of " << stats.currentLines << " lines. ("
-                << (float) stats.currentRemovedLines / (float) stats.currentLines * 100 << "%)\n\n";
+        if (isAlreadyOptimized(&data)) {
+            cout << "\nSkipping " << data.userInput << ", file already optimized\n";
+            if (data.isLog) {
+                data.log << "\nSkipping " << data.userInput << ", file already optimized\n";
+            }
+        } else {
+            optimizer(&stats, &data);
         }
-        stats.totalFiles++;
-        stats.totalRemovedLines = stats.totalRemovedLines + stats.currentRemovedLines;
-        stats.totalLines = stats.totalLines + stats.currentLines;
     }
     cout << "\nSuccessful compression of " << stats.totalFiles << " files.\nRemoved " << stats.totalRemovedLines << " out of " << stats.totalLines << " stats.total lines. (" << (float) stats.totalRemovedLines / (float) stats.totalLines * 100 << "%)\n\n";
     if (data.isLog) {
@@ -507,6 +531,6 @@ void optimizer(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
-    optimizer(argc, argv);
+    fileLauncher(argc, argv);
     return 0;
 }
