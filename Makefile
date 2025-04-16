@@ -1,19 +1,33 @@
-CXX = g++
-TARGET = vmfoptimizer
+CXX ?= g++
+TARGET ?= vmfoptimizer
+BUILD_DIR = build/$(TARGET)
 SRC = $(wildcard src/*.cpp)
-OBJ = $(SRC:src/%.cpp=build/%.o)
-CXXFLAGS = -Wall -Wextra -O2
+OBJ = $(patsubst src/%.cpp, $(BUILD_DIR)/%.o, $(SRC))
+DEP = $(OBJ:.o=.d)
 
-$(TARGET): build $(OBJ)
-	$(CXX) $(OBJ) -o $@
+CXXFLAGS ?= -Wall -Wextra -O2 -flto -DNDEBUG -Iincludes -MMD -MP
+LDPLATEFORMSFLAGS ?=
+LDFLAGS ?= -flto
 
-build/%.o: src/%.cpp | build
-	$(CXX) $(CXXFLAGS) -c $< -o $@ -Iincludes
+.PHONY: all clean windows
 
-build:
-	mkdir -p build
+all: $(TARGET)
+
+cross: $(TARGET) windows
+
+$(TARGET): $(OBJ)
+	@echo Linking $@
+	$(CXX) $(OBJ) -o $@ $(LDFLAGS) $(LDPLATEFORMSFLAGS)
+
+$(BUILD_DIR)/%.o: src/%.cpp
+	@echo Compiling $<
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+-include $(DEP)
+
+windows:
+	@$(MAKE) --no-print-directory CXX="x86_64-w64-mingw32-g++" TARGET=$(TARGET).exe LDPLATEFORMSFLAGS="-static -s"
 
 clean:
-	rm -rf build $(TARGET)
-
-.PHONY: clean build
+	rm -rf build $(TARGET) $(TARGET).exe
