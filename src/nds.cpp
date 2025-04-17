@@ -12,7 +12,6 @@ void optimizeWorldNds(Stats *stats, Data *data) {
         data->line.find("detailmaterial\" \"") != string::npos ||
         data->line.find("comment\" \"") != string::npos ||
         data->line.find("mapversion\" \"") != string::npos ||
-        data->line.find("classname\" \"") != string::npos ||
         data->line.find("lightmapscale\" \"") != string::npos) {
             data->line = "";
             stats->currentRemovedLines++;
