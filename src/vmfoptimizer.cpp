@@ -58,7 +58,7 @@ void loadFile(Data *data) {
 }
 
 void optimizeWorld(Stats *stats, Data *data) {
-    while (getline(data->file, data->line) && data->line != "entity") {
+    while (getline(data->file, data->line) && !data->line.starts_with("entity")) {
         if (data->isNds) {
             optimizeWorldNds(stats, data);
         }

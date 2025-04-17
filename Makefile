@@ -5,7 +5,7 @@ SRC = $(wildcard src/*.cpp)
 OBJ = $(patsubst src/%.cpp, $(BUILD_DIR)/%.o, $(SRC))
 DEP = $(OBJ:.o=.d)
 
-CXXFLAGS ?= -Wall -Wextra -O2 -flto -DNDEBUG -Iincludes -MMD -MP
+CXXFLAGS ?= -Wall -Wextra -O2 -flto -DNDEBUG -Iincludes -MMD -MP -std=c++20
 LDPLATEFORMSFLAGS ?=
 LDFLAGS ?= -flto
 
