@@ -15,8 +15,8 @@ string removeExtraCharacters(Data *data) {
     if (data->isLow) {
         return data->line;
     }
-    string search[] = {"\r", "\n", "\t", "\" \""};
-    string replace[] = {"", "", "", "\"\""};
+    string search[] = {"\r", "\n", "\t", "\" \"", ") ("};
+    string replace[] = {"", "", "", "\"\"", ")("};
 
     for (size_t i = 0, pos = 0; i < size(search); i += 1, pos = 0) {
         while ((pos = data->line.find(search[i], pos)) != string::npos) {
