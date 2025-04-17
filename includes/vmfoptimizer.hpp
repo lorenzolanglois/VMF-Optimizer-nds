@@ -28,6 +28,8 @@ class Data {
         string userInput = "";
         // String containing the current line
         string line = "";
+        // String containing the filename of the log file
+        string logfilename = "log.txt";
         // The file that is being read
         ifstream file;
         // The log file

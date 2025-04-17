@@ -445,8 +445,9 @@ void argsParser(int argc, char *argv[], Data *data) {
             data->isLow = true;
         } else if (string(argv[i]) == "-nolog") {
             data->isLog = false;
-        } else if (string(argv[i]) == "-nolog") {
-            data->isLog = false;
+        } else if (string(argv[i]) == "-logfile") {
+        } else if (i > 1 && string(argv[i - 1]) == "-logfile") {
+            data->logfilename = string(argv[i]);
         } else if (string(argv[i]).at(0) == '-') {
             cerr << "Unknown argument: " + string(argv[i]) << endl;
         } else {
@@ -493,7 +494,7 @@ void fileLauncher(int argc, char *argv[]) {
     cout << "VMF Optimizer nds, originally by dabmasterars, fork by lorenzolanglois.\nMultiple files have to be inserted consecutively.\nDrop your .vmf file here or type file name: " << endl;
     argsParser(argc, argv, &data);
     if (data.isLog) {
-        data.log.open("log.txt");
+        data.log.open(data.logfilename);
     }
     while (1) {
         if (data.isFileList) {

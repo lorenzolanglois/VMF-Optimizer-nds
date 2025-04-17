@@ -32,6 +32,11 @@ Keep useless characters including spaces, tabulations and new lines. Mostly usef
 >-nolog
 
 Disable log file.
+<br>
+
+>-logfile [filename]
+
+Change the name of the log file. This has no effet when used with *-nolog*.
 
 ## Credits
 Fork from the project [VMF-Optimizer](https://github.com/dabmasterars/VMF-Optimizer) made by [dabmasterars](https://github.com/dabmasterars)
