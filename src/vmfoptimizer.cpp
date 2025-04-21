@@ -1,5 +1,4 @@
 // TO DO:
-// options to remove vertices_plus (hammer++) and editor (entity data)
 // option "is this a prefab?" (removes more stuff if yes)
 // option to remove lightmap values (default off cause the default lightmap value can be changed; if on, removes parameter if the value is 16 [default if unconfigured])
 
@@ -62,13 +61,10 @@ void optimizeWorld(Stats *stats, Data *data) {
         if (data->isNds) {
             optimizeWorldNds(stats, data);
         }
-        if (data->line.find("vertices_plus") != string::npos) {
-            while (data->line.find("material") == string::npos && getline(data->file, data->line)) {
-                stats->currentLines++;
-                stats->currentRemovedLines++;
-            }
-            data->out << removeExtraCharacters(data);
-        } else if (data->line.find("rotation\" \"0") == string::npos &&
+        if (data->isPlusPlus) {
+            optimizeHammerPlusPlus(stats, data);
+        }
+        if (data->line.find("rotation\" \"0") == string::npos &&
                    data->line.find("smoothing_groups\" \"0") == string::npos &&
                    data->line.find("elevation\" \"0") == string::npos &&
                    data->line.find("subdiv\" \"0") == string::npos) {
@@ -92,9 +88,11 @@ void optimizeEntities(Stats *stats, Data *data) {
         if (data->isNds) {
             optimizeEntitiesNds(stats, data);
         }
+        if (data->isPlusPlus) {
+            optimizeHammerPlusPlus(stats, data);
+        }
         if (data->line.length() > 4) {
-            if (data->line.find("classname") == string::npos &&
-                data->line.find("vertices_plus") == string::npos) {
+            if (data->line.find("classname") == string::npos) {
                 switch (type) {
                     case 0:
                         data->out << removeExtraCharacters(data);
@@ -423,13 +421,6 @@ void optimizeEntities(Stats *stats, Data *data) {
                 else if (data->line.find("\"editor") != string::npos) type = 24;
                 else type = 0;
                 data->out << removeExtraCharacters(data);
-            } else if (data->line.find("vertices_plus") != string::npos) {
-                while (data->line.find("material") == string::npos && getline(data->file, data->line)) {
-                    stats->currentLines++;
-                    stats->currentRemovedLines++;
-                }
-                type = 18;
-                data->out << removeExtraCharacters(data);
             }
         }
         else data->out << removeExtraCharacters(data);
@@ -445,6 +436,8 @@ void argsParser(int argc, char *argv[], Data *data) {
             data->isLow = true;
         } else if (string(argv[i]) == "-nolog") {
             data->isLog = false;
+        } else if (string(argv[i]) == "-noplusplus") {
+            data->isPlusPlus = false;
         } else if (string(argv[i]) == "-logfile") {
         } else if (i > 1 && string(argv[i - 1]) == "-logfile") {
             data->logfilename = string(argv[i]);

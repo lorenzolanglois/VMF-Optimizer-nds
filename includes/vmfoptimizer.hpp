@@ -42,6 +42,8 @@ class Data {
         bool isLow = false;
         // If boolean is true, write logs in a file
         bool isLog = true;
+        // If boolean is true, apply hammer plus plus optimization
+        bool isPlusPlus = true;
         // If boolean is false, do not use filelist given in argument
         bool isFileList = false;
 };
@@ -50,3 +52,7 @@ class Data {
 
 void optimizeWorldNds(Stats *stats, Data *data);
 void optimizeEntitiesNds(Stats *stats, Data *data);
+
+// hammerplusplus
+
+void optimizeHammerPlusPlus(Stats *stats, Data *data);

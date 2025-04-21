@@ -24,6 +24,11 @@ Use file as argument(s) rather than typing the filename during launch time.
 Keep properties normally removed for NDS. This will ensure that the map file is compatible with Hammer. (Similar to how original VMF Optimizer works)
 <br>
 
+>-noplusplus
+
+Keep Hammer++ properties normally removed. This will ensure that the map file keeps all optimizations and functionnalities added by Hammer++.
+<br>
+
 >-keep
 
 Keep useless characters including spaces, tabulations and new lines. Mostly useful for debugging and to make the VMF file more readable to humans.
