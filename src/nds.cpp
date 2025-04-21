@@ -17,6 +17,13 @@ void optimizeWorldNds(Stats *stats, Data *data) {
             data->line = "";
             stats->currentRemovedLines++;
     }
+    if (data->line.find("editor\r") != string::npos) {
+        while (getline(data->file, data->line) && data->line.find("}") == string::npos) {
+            stats->currentRemovedLines++;
+        }
+        data->line = "";
+        stats->currentRemovedLines++;
+    }
 }
 
 void optimizeEntitiesNds(Stats *stats, Data *data) {
@@ -58,5 +65,12 @@ void optimizeEntitiesNds(Stats *stats, Data *data) {
         data->line.find("cspinup\" \"") != string::npos) {
             data->line = "";
             stats->currentRemovedLines++;
+    }
+    if (data->line.find("editor\r") != string::npos) {
+        while (getline(data->file, data->line) && data->line.find("}") == string::npos) {
+            stats->currentRemovedLines++;
+        }
+        data->line = "";
+        stats->currentRemovedLines++;
     }
 }
